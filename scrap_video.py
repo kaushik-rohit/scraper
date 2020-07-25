@@ -1,10 +1,11 @@
 import pandas as pd
 import os
 import subprocess
+import time
 
 
 def scrap_videos():
-    path = './data/BBC/54/2015/no_transcripts'
+    path = './data/BBC/54/2016/no_transcripts'
     sources = os.listdir(path)
 
     for source in sources:
@@ -22,15 +23,17 @@ def scrap_videos():
                                                                 reason))
                 continue
 
-            output_template = '-o ./videos/{}-{}-{}'.format(source_name, program, date)
+            output_option = '-o'
+            output_template = './videos/{}-{}-{}'.format(source_name, program, date)
             video_link = row['video_link']
             print('getting video from {}'.format(video_link))
-            cmd = ['youtube-dl', output_template , video_link]
+            cmd = ['youtube-dl', output_option, output_template, video_link]
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             o, e = proc.communicate()
-
             print('Error: ' + e.decode('ascii'))
+            # delay between videos
+            time.sleep(10*60)
 
 
 if __name__ == '__main__':
