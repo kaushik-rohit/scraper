@@ -24,10 +24,15 @@ def scrap_videos():
                 continue
 
             output_option = '-o'
-            output_template = './videos/{}-{}-{}'.format(source_name, program, date)
+            output_name = './videos/{}-{}-{}.mp4'.format(source_name, program, date)
             video_link = row['video_link']
+
+            if os.path.isfile(output_name):
+                print('video from {} already downloaded'.format(video_link))
+                continue
+
             print('getting video from {}'.format(video_link))
-            cmd = ['youtube-dl', output_option, output_template, video_link]
+            cmd = ['youtube-dl', output_option, output_name, video_link]
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
             o, e = proc.communicate()
