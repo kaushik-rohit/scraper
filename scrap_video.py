@@ -2,10 +2,24 @@ import pandas as pd
 import os
 import subprocess
 import time
+import argparse
+
+# create necessary arguments to run the analysis
+parser = argparse.ArgumentParser()
+parser.add_argument('-i', '--id',
+                    type=str,
+                    required=True,
+                    help='channel id for which video is to be scraped!!')
+
+parser.add_argument('-y', '--year',
+                    choices=[2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014,
+                             2015, 2016, 2017, 2018],
+                    type=int,
+                    help='The years for which analysis is to be performed.')
 
 
-def scrap_videos():
-    path = './data/BBC/54/2016/no_transcripts'
+def scrap_videos(bbc_id, year):
+    path = './data/BBC/{}/{}/no_transcripts'.format(bbc_id, year)
     sources = os.listdir(path)
 
     for source in sources:
@@ -42,4 +56,7 @@ def scrap_videos():
 
 
 if __name__ == '__main__':
-    scrap_videos()
+    args = parser.parse_args()
+    year = args.year
+    bbc_id = args.id
+    scrap_videos(bbc_id, year)
