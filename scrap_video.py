@@ -17,8 +17,13 @@ parser.add_argument('-y', '--year',
                     type=int,
                     help='The years for which analysis is to be performed.')
 
+parser.add_argument('--output_path',
+                    type=str,
+                    default="/media/rohit/2TB WD/videos",
+                    help="the path where scraped videos are to be stored.")
 
-def scrap_videos(bbc_id, year):
+
+def scrap_videos(bbc_id, year, output_path):
     path = './data/BBC/{}/{}/no_transcripts'.format(bbc_id, year)
     sources = os.listdir(path)
 
@@ -32,13 +37,8 @@ def scrap_videos(bbc_id, year):
             date = row['Date']
             reason = row['Unavailable reason']
 
-            if 'has to be requested' in reason or 'Problem' in reason:
-                print('skipping {} {} for {} because {}'.format(row['Source'], row['Program Name'], row['Date'],
-                                                                reason))
-                continue
-
             output_option = '-o'
-            output_name = './videos/{}-{}-{}.mp4'.format(source_name, program, date)
+            output_name = '{}/videos/{}/{}/{}-{}-{}.mp4'.format(output_path, bbc_id, year, source_name, program, date)
             video_link = row['video_link']
 
             if os.path.isfile(output_name):
@@ -59,4 +59,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     year = args.year
     bbc_id = args.id
-    scrap_videos(bbc_id, year)
+    output_path = args.output_path
+    scrap_videos(bbc_id, year, output_path)
