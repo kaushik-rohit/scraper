@@ -3,6 +3,7 @@ import os
 import subprocess
 import time
 import argparse
+import request_video
 
 # create necessary arguments to run the analysis
 parser = argparse.ArgumentParser()
@@ -35,6 +36,7 @@ def scrap_videos(bbc_id, year, output_path):
             source_name = row['Source']
             program = row['Program Name']
             date = row['Date']
+            unavailable_link = row['Unavailable link']
             reason = row['Unavailable reason']
 
             output_option = '-o'
@@ -45,6 +47,9 @@ def scrap_videos(bbc_id, year, output_path):
                 print('video from {} already downloaded'.format(video_link))
                 continue
 
+            if 'to be requested' in reason:
+                request_video.request_video(unavailable_link)
+                
             print('getting video from {}'.format(video_link))
             cmd = ['youtube-dl', output_option, output_name, video_link]
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
