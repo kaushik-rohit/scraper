@@ -4,7 +4,7 @@ import subprocess
 import time
 import argparse
 
-from selenium.webdriver.chrome import webdriver
+import selenium.webdriver as webdriver
 
 import request_video
 from selenium.webdriver.support.ui import WebDriverWait
@@ -50,24 +50,23 @@ class VideoScraper:
         DRIVER_BIN = os.path.join(self.PROJECT_ROOT, "chromedriver")
         self.browser = webdriver.Chrome(executable_path=DRIVER_BIN, chrome_options=chrome_options)
 
-    @staticmethod
-    def clickThroughToNewPage(link_xpath, browser, time_wait=10, time_wait_stale=5, additional=None):
+    def clickThroughToNewPage(self, link_xpath, time_wait=10, time_wait_stale=5, additional=None):
 
         try:
-            WebDriverWait(browser, time_wait).until(EC.presence_of_element_located((By.XPATH, link_xpath)))
+            WebDriverWait(self.browser, time_wait).until(EC.presence_of_element_located((By.XPATH, link_xpath)))
         except TimeoutException:
             raise NoSuchElementException("Could not find the next page button.")
         try:
-            WebDriverWait(browser, time_wait).until(EC.visibility_of_element_located((By.XPATH, link_xpath)))
+            WebDriverWait(self.browser, time_wait).until(EC.visibility_of_element_located((By.XPATH, link_xpath)))
         except TimeoutException:
             raise ElementNotVisibleException("The next page button is not visible.")
 
         try:
-            WebDriverWait(browser, time_wait).until(EC.element_to_be_clickable((By.XPATH, link_xpath)))
+            WebDriverWait(self.browser, time_wait).until(EC.element_to_be_clickable((By.XPATH, link_xpath)))
         except TimeoutException:
             raise ElementNotVisibleException("The next page button is not clickable.")
 
-        link = browser.find_element_by_xpath(link_xpath)
+        link = self.browser.find_element_by_xpath(link_xpath)
         link.click()
 
         def waitFor(condition_function):
@@ -95,7 +94,7 @@ class VideoScraper:
         self.browser.get(url)
 
         try:
-            clickThroughToNewPage("//a[@class='btn btn-primary' and text()='Sign In']", browser)
+            self.clickThroughToNewPage("//a[@class='btn btn-primary' and text()='Sign In']", self.browser)
         except Exception:
             self.browser.quit()
             print(">>> Did not find the next page button. Failed to Log In.")
