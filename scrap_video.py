@@ -47,8 +47,10 @@ class VideoScraper:
         self.PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
         chrome_options = Options()
         chrome_options.add_argument("user-data-dir=" + self.PROJECT_ROOT + "/Profile 1")
+        chrome_options.add_argument('--headless')
         DRIVER_BIN = os.path.join(self.PROJECT_ROOT, "chromedriver")
         self.browser = webdriver.Chrome(executable_path=DRIVER_BIN, chrome_options=chrome_options)
+        self.login()
 
     def clickThroughToNewPage(self, link_xpath, time_wait=10, time_wait_stale=5, additional=None):
 
@@ -99,13 +101,24 @@ class VideoScraper:
             self.browser.quit()
             print(">>> Did not find the next page button. Failed to Log In.")
 
-        self.browser.find_element_by_id('institution-field').send_keys('University of Warwick')
-        self.browser.find_element_by_xpath('//li[@data-idp="https://idp.warwick.ac.uk/idp/shibboleth"]').click()
-        self.browser.find_element_by_xpath("//input[@class='btn btn-primary btn-select']").click()
+        try:
+            WebDriverWait(self.browser, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//input[@class='btn btn-primary btn-select']")))
+            self.browser.find_element_by_id('institution-field').send_keys('University of Warwick')
+            self.browser.find_element_by_xpath('//li[@data-idp="https://idp.warwick.ac.uk/idp/shibboleth"]').click()
+            self.browser.find_element_by_xpath("//input[@class='btn btn-primary btn-select']").click()
+        except NoSuchElementException:
+            self.browser.quit()
+            return
 
-        self.browser.find_element_by_id('userName').send_keys('u1664202')
-        self.browser.find_element_by_id('password').send_keys('mk011211')
-        self.browser.find_element_by_xpath("//button[@id='signinbutton']").click()
+        try:
+            self.browser.find_element_by_id('userName').send_keys('u1664202')
+            self.browser.find_element_by_id('password').send_keys('mk011211')
+            self.browser.find_element_by_xpath("//button[@id='signinbutton']").click()
+        except NoSuchElementException:
+            pass
+
+        time.sleep(99999999)
 
     def scrap_video(self, bbc_id, year):
         path = os.path.join(self.data_path, '{}/{}/no_transcripts'.format(bbc_id, year))
