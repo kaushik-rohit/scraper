@@ -235,6 +235,7 @@ class VideoScraper:
             video = self.requested.get()
 
             print('getting video from {}'.format(video.video_link))
+            print('program link for video {}'.format(video.bcast_link))
             print('reason for unavailability {}'.format(video.reason))
             output_option = '-o'
             video_link = video.video_link
@@ -247,7 +248,7 @@ class VideoScraper:
 
             o, e = proc.communicate()
             if e is not None:
-                print('Error: ' + e.decode('ascii'))
+                print('error downloading the video')
                 self.requested.put(video)
             else:
                 time.sleep(10*60)
