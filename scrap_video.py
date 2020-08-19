@@ -217,7 +217,7 @@ class VideoScraper:
                 return False
 
         for i in range(self.n_videos_every_request):
-            video = self.queue.get()
+            video = self.to_be_requested.get()
             link = video.bcast_link
             request_link = '{}&request=1'.format(link)
             self.browser.get(request_link)
@@ -295,6 +295,6 @@ if __name__ == '__main__':
     y = args.year
     _id = args.id
     output_path = args.output_path
-    data_path = args.data_path
-    scraper = VideoScraper(output_path, data_path)
+    path = args.data_path
+    scraper = VideoScraper(output_path, path)
     scraper.scrap_video(_id, y)
