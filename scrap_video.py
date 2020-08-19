@@ -120,6 +120,9 @@ class VideoInfo:
     def is_ready_to_download(self):
         pass
 
+    def __str__(self):
+        return self.bbc_id + ' ' + self.year + ' ' + self.source_name + ' ' + self.program + ' ' + self.date
+
 
 class VideoScraper:
     def __init__(self, save_path, data_path):
@@ -218,6 +221,7 @@ class VideoScraper:
 
         for i in range(self.n_videos_every_request):
             video = self.to_be_requested.get()
+            print('requesting {}'.format(video))
             link = video.bcast_link
             request_link = '{}&request=1'.format(link)
             self.browser.get(request_link)
