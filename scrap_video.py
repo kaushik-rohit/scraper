@@ -277,7 +277,7 @@ class VideoScraper:
                     print('video from {} already downloaded'.format(video_link))
                     continue
 
-                video = VideoInfo(video_link, unavailable_link, bbc_id, year, source_name, program, date)
+                video = VideoInfo(video_link, unavailable_link, bbc_id, year, source_name, program, date, reason)
 
                 if 'to be requested' in reason:
                     self.to_be_requested.put(video)
