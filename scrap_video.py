@@ -253,15 +253,21 @@ class VideoScraper:
 
                 return e
 
+            def get_video_link(v):
+                #  If the video link doesnot work extract it from the webpage
+                self.browser.get(v.bcast_link)
+                vlink = self.browser.find_element_by_xpath('//source').get_attribute("src")
+                v.video_link = vlink
+
             e = try_download(video)
             if e is not None:
-                if 'BBC1-London' in video.video_link:
-                    video.video_link = video.video_link.replace('BBC1-London', 'BBC1-East')
-                    e = try_download(video)
-
+                get_video_link(video)
+                e = try_download(video)
                 if e is not None:
                     print('error downloading the video')
                     self.requested.put(video)
+                else:
+                    time.sleep(10*60)
             else:
                 time.sleep(10*60)
             wait_time = time.time() - self.last_request_made
