@@ -121,7 +121,7 @@ class VideoInfo:
         pass
 
     def __str__(self):
-        return self.bbc_id + ' ' + self.year + ' ' + self.source_name + ' ' + self.program + ' ' + self.date
+        return '{} {} {} {} {}'.format(str(self.bbc_id), str(self.year), self.source_name, self.program, self.date)
 
 
 class VideoScraper:
