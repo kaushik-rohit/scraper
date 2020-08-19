@@ -108,7 +108,7 @@ def login(browser):
 
 
 class VideoInfo:
-    def __init__(self, video_link, bcast_link, bbc_id, year, source_name, program, date):
+    def __init__(self, video_link, bcast_link, bbc_id, year, source_name, program, date, reason):
         self.video_link = video_link
         self.bcast_link = bcast_link
         self.bbc_id = bbc_id
@@ -116,6 +116,7 @@ class VideoInfo:
         self.source_name = source_name
         self.program = program
         self.date = date
+        self.reason = reason
 
     def is_ready_to_download(self):
         pass
@@ -138,7 +139,7 @@ class VideoScraper:
         self.PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
         chrome_options = Options()
         chrome_options.add_argument("user-data-dir=" + self.PROJECT_ROOT + "/Profile 17")
-        chrome_options.add_argument('--headless')
+        # chrome_options.add_argument('--headless')
         DRIVER_BIN = os.path.join(self.PROJECT_ROOT, "chromedriver")
         self.browser = webdriver.Chrome(executable_path=DRIVER_BIN, chrome_options=chrome_options)
         self.login()
@@ -234,6 +235,7 @@ class VideoScraper:
             video = self.requested.get()
 
             print('getting video from {}'.format(video.video_link))
+            print('reason for unavailability {}'.format(video.reason))
             output_option = '-o'
             video_link = video.video_link
 
