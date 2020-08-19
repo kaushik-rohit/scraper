@@ -256,7 +256,7 @@ class VideoScraper:
             e = try_download(video)
             if e is not None:
                 if 'BBC1-London' in video.video_link:
-                    video.video_link = video.video_link.replace('BBC1-London', 'BBC-East')
+                    video.video_link = video.video_link.replace('BBC1-London', 'BBC1-East')
                     e = try_download(video)
 
                 if e is not None:
