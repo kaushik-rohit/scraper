@@ -227,6 +227,8 @@ class VideoScraper:
             request_link = '{}&request=1'.format(link)
             self.browser.get(request_link)
 
+            time.sleep(1*60)  # sleep for 1 min before making another request
+
     def download_videos(self):
         wait_time = time.time() - self.last_request_made
         while wait_time < self.request_video_every:
@@ -234,22 +236,32 @@ class VideoScraper:
                 break
             video = self.requested.get()
 
-            print('getting video from {}'.format(video.video_link))
-            print('program link for video {}'.format(video.bcast_link))
-            print('reason for unavailability {}'.format(video.reason))
-            output_option = '-o'
-            video_link = video.video_link
+            def try_download(v):
+                print('getting video from {}'.format(v.video_link))
+                print('program link for video {}'.format(v.bcast_link))
+                print('reason for unavailability {}'.format(v.reason))
+                output_option = '-o'
+                video_link = v.video_link
 
-            output_name = '{}/videos/{}/{}/{}-{}-{}.mp4'.format(self.save_path, video.bbc_id, video.year,
-                                                                video.source_name, video.program, video.date)
+                output_name = '{}/videos/{}/{}/{}-{}-{}.mp4'.format(self.save_path, v.bbc_id, v.year,
+                                                                    v.source_name, v.program, v.date)
 
-            cmd = ['youtube-dl', output_option, output_name, video_link]
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                cmd = ['youtube-dl', output_option, output_name, video_link]
+                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-            o, e = proc.communicate()
+                o, e = proc.communicate()
+
+                return e
+
+            e = try_download(video)
             if e is not None:
-                print('error downloading the video')
-                self.requested.put(video)
+                if 'BBC1-London' in video.video_link:
+                    video.video_link = video.video_link.replace('BBC1-London', 'BBC-East')
+                    e = try_download(video)
+
+                if e is not None:
+                    print('error downloading the video')
+                    self.requested.put(video)
             else:
                 time.sleep(10*60)
             wait_time = time.time() - self.last_request_made
