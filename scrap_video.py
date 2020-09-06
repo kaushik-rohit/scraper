@@ -350,13 +350,12 @@ class VideoScraper:
             WebDriverWait(self.browser, 10).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'h4')))
             results = self.browser.find_elements_by_tag_name('h4')
 
-            assert (len(results) == 1)
+            results = [result for result in results if result.text != ""]
 
+            assert(len(results) == 1)
             result = results[0]
-
-            if result.text != "":
-                WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'a')))
-                info.bcast_link = result.find_element_by_tag_name('a').get_attribute("href")
+            WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'a')))
+            info.bcast_link = result.find_element_by_tag_name('a').get_attribute("href")
 
         get_broadcast_link(info)
 
