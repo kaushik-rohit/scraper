@@ -333,9 +333,9 @@ class VideoScraper:
             url_pattern = "https://learningonscreen.ac.uk/ondemand/search.php/prog?q%5B0%5D%5Bv%5D={prog}" \
                           "&search_type=1" \
                           "&is_available=1&q%5B0%5D%5Bindex%5D=&source&date_type=1&date=&date_start%5B1%5D={month:02d}"\
-                          "&date_start%5B2%5D={day}&date_start%5B0%5D={year}&date_start%5B3%5D={" \
+                          "&date_start%5B2%5D={day:02d}&date_start%5B0%5D={year}&date_start%5B3%5D={" \
                           "hour}&date_start%5B4%5D={min}" \
-                          "&date_end%5B1%5D={month:02d}&date_end%5B2%5D={day}&date_end%5B0%5D={year}" \
+                          "&date_end%5B1%5D={month:02d}&date_end%5B2%5D={day:02d}&date_end%5B0%5D={year}" \
                           "&date_end%5B3%5D={hour}&date_end%5B4%5D={min}&institution=&sort=relevance"
 
             url = url_pattern.format(prog=info.program.replace(" ", "+"),
@@ -350,7 +350,7 @@ class VideoScraper:
             WebDriverWait(self.browser, 10).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'h4')))
             results = self.browser.find_elements_by_tag_name('h4')
 
-            results = [result for result in results if result.text != ""]
+            results = [result for result in results if result.text == info.program]
 
             assert(len(results) == 1)
             result = results[0]
@@ -376,7 +376,7 @@ class VideoScraper:
             video_link = v.video_link
 
             output_name = '{}/videos/{}/{}/{}-{}-{}.mp4'.format(self.save_path, v.bbc_id, v.year,
-                                                                v.source_name, v.program, v.date)
+                                                                v.source_name, v.program, v.date.date())
 
             cmd = ['youtube-dl', output_option, output_name, video_link]
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -394,7 +394,13 @@ class VideoScraper:
         get_video_link(info)
         e = try_download(info)
         if e is not None:
-            print('error downloading the video')
+            time.sleep(60)
+            e = try_download(info)
+            if e is not None:
+                print('error downloading the video')
+                print(e)
+            else:
+                return True
         else:
             return True
 
@@ -434,6 +440,7 @@ class VideoScraper:
 
                 if success:
                     print('downloading was successful')
+                    time.sleep(60) # wait 1 minute before downloading next video
                     # TODO: Mark that video was downloaded
 
 
