@@ -410,15 +410,15 @@ class VideoScraper:
         path = os.path.join(self.data_path, '{}/{}'.format(bbc_id, year))
         sources = os.listdir(path)
 
+        sources = [source for source in sources if source.endswith('.csv')]
+
         for source in sources:
             source_path = os.path.join(path, source)
             source_df = pd.read_csv(source_path, index_col=0)
-            pd.to_datetime(source_df['Date'])
-
             for index, row in source_df.iterrows():
                 source_name = row['Source']
                 program = row['Program Name']
-                date = row['Date']
+                date = pd.to_datetime(['Date'])
                 hour, mins = row['Time'].split(':')
                 output_option = '-o'
                 output_name = '{}/videos/{}/{}/{}-{}-{}.mp4'.format(output_path, bbc_id, year, source_name, program,
