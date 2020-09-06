@@ -338,7 +338,7 @@ class VideoScraper:
                           "&date_end%5B1%5D={month}&date_end%5B2%5D={day}&date_end%5B0%5D={year}" \
                           "&date_end%5B3%5D={hour}&date_end%5B4%5D={min}&institution=&sort=relevance"
 
-            url = url_pattern.format(prog=info.program,
+            url = url_pattern.format(prog=info.program.replace(" ", "+"),
                                      month=info.date.month,
                                      day=info.date.day,
                                      year=info.date.year,
@@ -414,11 +414,11 @@ class VideoScraper:
 
         for source in sources:
             source_path = os.path.join(path, source)
-            source_df = pd.read_csv(source_path, index_col=0)
+            source_df = pd.read_csv(source_path)
             for index, row in source_df.iterrows():
                 source_name = row['Source']
                 program = row['Program Name']
-                date = pd.to_datetime(['Date'])
+                date = pd.to_datetime(row['Date'])
                 hour, mins = row['Time'].split(':')
                 output_option = '-o'
                 output_name = '{}/videos/{}/{}/{}-{}-{}.mp4'.format(output_path, bbc_id, year, source_name, program,
