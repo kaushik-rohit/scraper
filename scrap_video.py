@@ -393,10 +393,10 @@ class VideoScraper:
 
         get_video_link(info)
         e = try_download(info)
-        if e is not None:
+        if e is not None and e is not '':
             time.sleep(60)
             e = try_download(info)
-            if e is not None:
+            if e is not None and e is not '':
                 print('error downloading the video')
                 print(e)
             else:
