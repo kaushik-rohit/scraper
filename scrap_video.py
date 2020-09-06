@@ -332,10 +332,10 @@ class VideoScraper:
         def get_broadcast_link(info):
             url_pattern = "https://learningonscreen.ac.uk/ondemand/search.php/prog?q%5B0%5D%5Bv%5D={prog}" \
                           "&search_type=1" \
-                          "&is_available=1&q%5B0%5D%5Bindex%5D=&source&date_type=1&date=&date_start%5B1%5D={month}" \
+                          "&is_available=1&q%5B0%5D%5Bindex%5D=&source&date_type=1&date=&date_start%5B1%5D={month:02d}"\
                           "&date_start%5B2%5D={day}&date_start%5B0%5D={year}&date_start%5B3%5D={" \
                           "hour}&date_start%5B4%5D={min}" \
-                          "&date_end%5B1%5D={month}&date_end%5B2%5D={day}&date_end%5B0%5D={year}" \
+                          "&date_end%5B1%5D={month:02d}&date_end%5B2%5D={day}&date_end%5B0%5D={year}" \
                           "&date_end%5B3%5D={hour}&date_end%5B4%5D={min}&institution=&sort=relevance"
 
             url = url_pattern.format(prog=info.program.replace(" ", "+"),
