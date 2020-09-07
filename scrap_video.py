@@ -371,7 +371,6 @@ class VideoScraper:
         def try_download(v):
             print('getting video from {}'.format(v.video_link))
             print('program link for video {}'.format(v.bcast_link))
-            print('reason for unavailability {}'.format(v.reason))
             output_option = '-o'
             video_link = v.video_link
 
@@ -393,10 +392,10 @@ class VideoScraper:
 
         get_video_link(info)
         e = try_download(info)
-        if e is not None and e is not '':
+        if e != '':
             time.sleep(60)
             e = try_download(info)
-            if e is not None and e is not '':
+            if e != '':
                 print('error downloading the video')
                 print(e)
             else:
@@ -425,7 +424,6 @@ class VideoScraper:
                 program = row['Program Name']
                 date = pd.to_datetime(row['Date'])
                 hour, mins = row['Time'].split(':')
-                output_option = '-o'
                 output_name = '{}/videos/{}/{}/{}-{}-{}.mp4'.format(output_path, bbc_id, year, source_name, program,
                                                                     date)
 
@@ -440,7 +438,7 @@ class VideoScraper:
 
                 if success:
                     print('downloading was successful')
-                    time.sleep(60) # wait 1 minute before downloading next video
+                    time.sleep(60)  # wait 1 minute before downloading next video
                     # TODO: Mark that video was downloaded
 
 
