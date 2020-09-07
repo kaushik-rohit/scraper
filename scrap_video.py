@@ -392,10 +392,10 @@ class VideoScraper:
 
         get_video_link(info)
         e = try_download(info)
-        if e != '':
+        if e != b'':
             time.sleep(60)
             e = try_download(info)
-            if e != '':
+            if e != b'':
                 print('error downloading the video')
                 print(e)
             else:
@@ -424,8 +424,8 @@ class VideoScraper:
                 program = row['Program Name']
                 date = pd.to_datetime(row['Date'])
                 hour, mins = row['Time'].split(':')
-                output_name = '{}/videos/{}/{}/{}-{}-{}.mp4'.format(output_path, bbc_id, year, source_name, program,
-                                                                    date)
+                output_name = '{}/videos/{}/{}/{}-{}-{}.mp4'.format(self.save_path, bbc_id, year, source_name, program,
+                                                                    date.date())
 
                 if os.path.isfile(output_name):
                     print('video from {} already downloaded')
