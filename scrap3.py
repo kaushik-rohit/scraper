@@ -13,7 +13,6 @@ from selenium.common.exceptions import TimeoutException, ElementNotVisibleExcept
     NoSuchElementException
 from selenium.common.exceptions import SessionNotCreatedException, WebDriverException
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.firefox.webdriver import FirefoxProfile
 
 # create necessary arguments to run the analysis
 parser = argparse.ArgumentParser()
@@ -105,13 +104,8 @@ def login(browser):
 
     try:
         browser.find_element_by_id('userName').send_keys('u1664202')
-        browser.find_element_by_xpath("//button[@class='btn btn-primary btn-lg btn-block sign-in-button']").click()
-        WebDriverWait(browser, 30).until(
-            EC.presence_of_element_located((By.XPATH, "//button[@class='btn btn-primary btn-lg btn-block sign-in-button']")))
-        self.browser.implicitly_wait(20)
         browser.find_element_by_id('password').send_keys('mk011211')
         browser.find_element_by_xpath("//button[@id='signinbutton']").click()
-        self.browser.implicitly_wait(20)
     except NoSuchElementException:
         pass
 
@@ -148,18 +142,11 @@ class VideoScraper:
         self.n_videos_every_request = 5  # 5 videos can be request within 6hrs
 
         self.PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
-        print(self.PROJECT_ROOT)
-        # options = Options()
-        #chrome_options.add_argument("user-data-dir=" + self.PROJECT_ROOT + "/Profile 2")
-        # options.add_argument("user-data-dir=/home/rohit/.config/google-chrome/Default")
+        chrome_options = Options()
+        chrome_options.add_argument("user-data-dir=" + self.PROJECT_ROOT + "/Profile 2")
         # chrome_options.add_argument('--headless')
-        # DRIVER_BIN = os.path.join(self.PROJECT_ROOT, "chromedriver")
-        # self.browser = webdriver.Chrome(executable_path=DRIVER_BIN, options=options)
-
-        # mozilla
-        DRIVER_BIN = os.path.join(self.PROJECT_ROOT, "geckodriver")
-        profile = FirefoxProfile('/home/rohit/.mozilla/firefox/6y0azwh0.default')
-        self.browser = webdriver.Firefox(profile)
+        DRIVER_BIN = os.path.join(self.PROJECT_ROOT, "chromedriver")
+        self.browser = webdriver.Chrome(executable_path=DRIVER_BIN, options=chrome_options)
         self.login()
 
     def clickThroughToNewPage(self, link_xpath, time_wait=10, time_wait_stale=5, additional=None):
@@ -224,8 +211,6 @@ class VideoScraper:
 
         try:
             self.browser.find_element_by_id('userName').send_keys('u1664202')
-            WebDriverWait(self.browser, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//button[@class='btn btn-primary btn-lg btn-block sign-in-button']")))
             self.browser.find_element_by_id('password').send_keys('mk011211')
             self.browser.find_element_by_xpath("//button[@id='signinbutton']").click()
         except NoSuchElementException:
@@ -250,50 +235,40 @@ class VideoScraper:
 
             time.sleep(1 * 60)  # sleep for 1 min before making another request
 
-    def download_videos(self):
-        wait_time = time.time() - self.last_request_made
-        while wait_time < self.request_video_every:
-            if self.requested.empty():
-                break
-            video = self.requested.get()
+    def download_video(self, video):
 
-            # TODO: Make sure that requested video is uploaded or the request is still being processed
+        def try_download(v):
+            print('getting video from {}'.format(v.video_link))
+            print('program link for video {}'.format(v.bcast_link))
+            print('reason for unavailability {}'.format(v.reason))
+            output_option = '-o'
+            video_link = v.video_link
 
-            def try_download(v):
-                print('getting video from {}'.format(v.video_link))
-                print('program link for video {}'.format(v.bcast_link))
-                print('reason for unavailability {}'.format(v.reason))
-                output_option = '-o'
-                video_link = v.video_link
+            output_name = '{}/videos/{}/{}/{}-{}-{}.mp4'.format(self.save_path, v.bbc_id, v.year,
+                                                                v.source_name, v.program, v.date)
 
-                output_name = '{}/videos/{}/{}/{}-{}-{}.mp4'.format(self.save_path, v.bbc_id, v.year,
-                                                                    v.source_name, v.program, v.date)
+            cmd = ['youtube-dl', output_option, output_name, video_link]
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-                cmd = ['youtube-dl', output_option, output_name, video_link]
-                proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            o, e = proc.communicate()
 
-                o, e = proc.communicate()
+            return e
 
-                return e
+        def get_video_link(v):
+            #  If the video link doesn't work extract it from the webpage
+            self.browser.get(v.bcast_link)
+            vlink = self.browser.find_element_by_xpath('//source').get_attribute("src")
+            v.video_link = vlink
 
-            def get_video_link(v):
-                #  If the video link doesn't work extract it from the webpage
-                self.browser.get(v.bcast_link)
-                vlink = self.browser.find_element_by_xpath('//source').get_attribute("src")
-                v.video_link = vlink
-
+        e = try_download(video)
+        if e is not None:
             e = try_download(video)
             if e is not None:
-                get_video_link(video)
-                e = try_download(video)
-                if e is not None:
-                    print('error downloading the video')
-                    self.requested.put(video)
-                else:
-                    time.sleep(10 * 60)
+                print('error downloading the video')
             else:
                 time.sleep(10 * 60)
-            wait_time = time.time() - self.last_request_made
+        else:
+            time.sleep(10 * 60)
 
     def scrap_video(self, bbc_id, year):
         """
@@ -325,22 +300,7 @@ class VideoScraper:
 
                 video = VideoInfo(video_link, unavailable_link, bbc_id, year, source_name, program, date, hour, mins,
                                   reason)
-
-                if 'to be requested' in reason:
-                    self.to_be_requested.put(video)
-                else:
-                    self.requested.put(video)
-
-        while not self.to_be_requested.empty():
-            # first request 5 videos and for the next 6 hours keep trying to download videos since we can only make
-            # 5 video request every 6 hour. If there are no more videos to be downloaded, wait before the 6 hour wait
-            # is over before making requests.
-            self.request_videos()
-            self.download_videos()  # download videos for next 6 hours
-            # wait to make another request
-            diff = self.request_video_every - time.time() + self.last_request_made
-            if diff > 0:
-                time.sleep(diff)
+                self.download_video(video)  # download videos for next 6 hours
 
     def search_video_link(self, info):
 
@@ -359,13 +319,14 @@ class VideoScraper:
                                      year=info.date.year,
                                      hour=info.hour,
                                      min=info.minute)
-            print(url)
 
             self.browser.get(url)
 
             WebDriverWait(self.browser, 10).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'h4')))
-            results = self.browser.find_elements_by_class_name('record-list-item')
-            print(results)
+            results = self.browser.find_elements_by_tag_name('h4')
+
+            results = [result for result in results if result.text == info.program]
+
             assert(len(results) == 1)
             result = results[0]
             WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'a')))
@@ -419,42 +380,6 @@ class VideoScraper:
 
         return False
 
-    def scrap_videos_without_link(self, bbc_id, year):
-        """
-        This method is used to scrap videos for programmes where we already have transcripts. In such case the
-        unavailable link was not stored in csv and hence we first need to search using name and date.
-        We donot need to maintain a request queues since these videos are already available.
-        """
-        path = os.path.join(self.data_path, '{}/{}/transcripts'.format(bbc_id, year))
-        sources = os.listdir(path)
-
-        sources = [source for source in sources if source.endswith('.csv')]
-
-        for source in sources:
-            source_path = os.path.join(path, source)
-            source_df = pd.read_csv(source_path)
-            for index, row in source_df.iterrows():
-                source_name = row['Source']
-                program = row['Program Name']
-                date = pd.to_datetime(row['Date'])
-                hour, mins = row['Time'].split(':')
-                output_name = '{}/videos/{}/{}/{}-{}-{}.mp4'.format(self.save_path, bbc_id, year, source_name, program,
-                                                                    date.date())
-
-                if os.path.isfile(output_name):
-                    print('video from {} already downloaded')
-                    continue
-
-                info = VideoInfo('', '', bbc_id, year, source_name, program, date, hour, mins, '')
-
-                video_link = self.search_video_link(info)
-                success = self.download_video_without_wait(info)
-
-                if success:
-                    print('downloading was successful')
-                    time.sleep(60)  # wait 1 minute before downloading next video
-                    # TODO: Mark that video was downloaded
-
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -462,10 +387,7 @@ if __name__ == '__main__':
     _id = args.id
     output_path = args.output_path
     path = args.data_path
-    link_unavailable = args.link_unavailable
 
     scraper = VideoScraper(output_path, path)
-    if not link_unavailable:
-        scraper.scrap_video(_id, y)
-    else:
-        scraper.scrap_videos_without_link(_id, y)
+    scraper.scrap_video(_id, y)
+

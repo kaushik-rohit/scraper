@@ -13,7 +13,6 @@ from selenium.common.exceptions import TimeoutException, ElementNotVisibleExcept
     NoSuchElementException
 from selenium.common.exceptions import SessionNotCreatedException, WebDriverException
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.firefox.webdriver import FirefoxProfile
 
 # create necessary arguments to run the analysis
 parser = argparse.ArgumentParser()
@@ -105,13 +104,8 @@ def login(browser):
 
     try:
         browser.find_element_by_id('userName').send_keys('u1664202')
-        browser.find_element_by_xpath("//button[@class='btn btn-primary btn-lg btn-block sign-in-button']").click()
-        WebDriverWait(browser, 30).until(
-            EC.presence_of_element_located((By.XPATH, "//button[@class='btn btn-primary btn-lg btn-block sign-in-button']")))
-        self.browser.implicitly_wait(20)
         browser.find_element_by_id('password').send_keys('mk011211')
         browser.find_element_by_xpath("//button[@id='signinbutton']").click()
-        self.browser.implicitly_wait(20)
     except NoSuchElementException:
         pass
 
@@ -148,18 +142,11 @@ class VideoScraper:
         self.n_videos_every_request = 5  # 5 videos can be request within 6hrs
 
         self.PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
-        print(self.PROJECT_ROOT)
-        # options = Options()
-        #chrome_options.add_argument("user-data-dir=" + self.PROJECT_ROOT + "/Profile 2")
-        # options.add_argument("user-data-dir=/home/rohit/.config/google-chrome/Default")
+        chrome_options = Options()
+        chrome_options.add_argument("user-data-dir=" + self.PROJECT_ROOT + "/Profile 2")
         # chrome_options.add_argument('--headless')
-        # DRIVER_BIN = os.path.join(self.PROJECT_ROOT, "chromedriver")
-        # self.browser = webdriver.Chrome(executable_path=DRIVER_BIN, options=options)
-
-        # mozilla
-        DRIVER_BIN = os.path.join(self.PROJECT_ROOT, "geckodriver")
-        profile = FirefoxProfile('/home/rohit/.mozilla/firefox/6y0azwh0.default')
-        self.browser = webdriver.Firefox(profile)
+        DRIVER_BIN = os.path.join(self.PROJECT_ROOT, "chromedriver")
+        self.browser = webdriver.Chrome(executable_path=DRIVER_BIN, options=chrome_options)
         self.login()
 
     def clickThroughToNewPage(self, link_xpath, time_wait=10, time_wait_stale=5, additional=None):
@@ -224,11 +211,12 @@ class VideoScraper:
 
         try:
             self.browser.find_element_by_id('userName').send_keys('u1664202')
-            WebDriverWait(self.browser, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//button[@class='btn btn-primary btn-lg btn-block sign-in-button']")))
             self.browser.find_element_by_id('password').send_keys('mk011211')
+            WebDriverWait(self.browser, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//button[@id='signinbutton']")))
             self.browser.find_element_by_xpath("//button[@id='signinbutton']").click()
         except NoSuchElementException:
+            print('not able to signin')
             pass
 
     def request_videos(self):
@@ -359,13 +347,14 @@ class VideoScraper:
                                      year=info.date.year,
                                      hour=info.hour,
                                      min=info.minute)
-            print(url)
 
             self.browser.get(url)
 
             WebDriverWait(self.browser, 10).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'h4')))
-            results = self.browser.find_elements_by_class_name('record-list-item')
-            print(results)
+            results = self.browser.find_elements_by_tag_name('h4')
+
+            results = [result for result in results if result.text == info.program]
+
             assert(len(results) == 1)
             result = results[0]
             WebDriverWait(self.browser, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'a')))
@@ -425,7 +414,7 @@ class VideoScraper:
         unavailable link was not stored in csv and hence we first need to search using name and date.
         We donot need to maintain a request queues since these videos are already available.
         """
-        path = os.path.join(self.data_path, '{}/{}/transcripts'.format(bbc_id, year))
+        path = os.path.join(self.data_path, '{}/{}'.format(bbc_id, year))
         sources = os.listdir(path)
 
         sources = [source for source in sources if source.endswith('.csv')]
